@@ -42,49 +42,51 @@ main = config['projects'][args[1]]
 # Name of python interpreter
 cmd = 'python'
 
-# Save the running processes here
-running = []
-
-# Set up the dependencies
-for d in main['deps']:
-    if not d in config['projects']:
-        print "Project", d, "was not found. Please update config file"
-        sys.exit(1)
-    x = config['projects'][d]
-    if 'reset' in x:
-        for r in x['reset']:
-            print "Resetting app", r, "for", d
-            p = subprocess.Popen( [cmd, "manage.py", "reset", r, "--noinput"],
-                                  cwd=x['dir'],
-                                  **stdparams)
-
-    if 'fixtures' in x:
-        for f in x['fixtures']:
-            print "Loading fixture", f, "for", d
-            p = subprocess.Popen( [cmd, "manage.py", "loaddata", f],
-                                  cwd=x['dir'],
-                                  **stdparams)
-
-    print "Starting server for", d, "on port", x['port']
-    p = subprocess.Popen( [cmd, "manage.py", "runserver", str(x['port'])],
-                          cwd=x['dir'],
-                          **stdparams)
-    running.append(p)
-
-print "Running tests"
 # Now we actually want some output
-stdparams['stdout'] = sys.stdout
-stdparams['stderr'] = sys.stdout
+testparams = dict(stdparams)
+testparams['stdout'] = sys.stdout
+testparams['stderr'] = sys.stdout
 for t in main['tests']:
-    p = subprocess.Popen( [cmd, "manage.py", "test", t],
-                          cwd=main['dir'],
-                          **stdparams)
-# Wait for the tests to complete
-p.wait()
+    print "\nRunning test", t
 
-# Now kill all running dependencies
-for r in running:
-    print "Killing", r.pid
-    os.killpg(r.pid, signal.SIGKILL)
+    # Save the running processes here
+    running = []
+
+    # Set up the dependencies
+    for d in main['deps']:
+        if not d in config['projects']:
+            print "Project", d, "was not found. Please update config file"
+            sys.exit(1)
+        x = config['projects'][d]
+        if 'reset' in x:
+            for r in x['reset']:
+                print "Resetting app", r, "for", d
+                p = subprocess.Popen( [cmd, "manage.py", "reset", r, "--noinput"],
+                                      cwd=x['dir'],
+                                      **stdparams)
+
+        if 'fixtures' in x:
+            for f in x['fixtures']:
+                print "Loading fixture", f, "for", d
+                p = subprocess.Popen( [cmd, "manage.py", "loaddata", f],
+                                      cwd=x['dir'],
+                                      **stdparams)
+
+        print "Starting server for", d, "on port", x['port']
+        p = subprocess.Popen( [cmd, "manage.py", "runserver", str(x['port'])],
+                              cwd=x['dir'],
+                              **stdparams)
+        running.append(p)
+
+    p = subprocess.Popen( [cmd, "manage.py", "test", "-v0", t],
+                          cwd=main['dir'],
+                          **testparams)
+    # Wait for the tests to complete
+    p.wait()
+
+    # Now kill all running dependencies
+    for r in running:
+        print "Killing", r.pid
+        os.killpg(r.pid, signal.SIGKILL)
 
 sys.exit()
