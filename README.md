@@ -14,7 +14,9 @@ To configure you need a Yaml file which contains all your Django projects you wa
       main: # Project identifier
         dir: /home/ulf/django/main         # Path where the files are located
         deps: [login, static]              # Projects which need to run in order for tests to complete
-        tests: [myapp, yourapp]		   # Tests to run
+        tests:                             # Collection of test profiles. 'default' is needed
+          default: [myapp, yourapp]        # Tests to run default
+          extended: [myapp, yourapp, herapp, hisapp] 
       login:
         dir: /home/ulf/django/login
         port: 8080                         # Port where the project runs as dependency
@@ -30,7 +32,9 @@ To run the tests, you need to supply the config file and the project, which you 
 
     ./deptest.py config.yaml main
 
-This will run the tests for the *main* project, as specified in the config file above. Before running the tests, the dependencies are started. In this case, the script runs the *login* project on port 8080 and the *static* project on port 8081. After apps are reset and fixtures loaded, the tests for *main* are run. After that, the dependencies get torn down.
+This will run the tests in profile `default` for the *main* project, as specified in the config file above. Before running the tests, the dependencies are started. In this case, the script runs the *login* project on port 8080 and the *static* project on port 8081. After apps are reset and fixtures loaded, the tests for *main* are run. After that, the dependencies get torn down. To run tests in profile `extended` use:
+
+    ./deptest.py config.yaml main extended
 
 ### Note
 

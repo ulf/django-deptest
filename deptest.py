@@ -18,16 +18,21 @@ import time
 from optparse import OptionParser
 
 # Check for correct number of arguments
-usage = "usage: %prog configfile project_to_test"
+usage = "usage: %prog configfile project_to_test [testprofile]"
 parser = OptionParser(usage=usage)
 parser.add_option('-d', '--dependency-stdout', action="store_true",
                   dest="dep_output", default=False,
                   help="Display output of dependencies on stdout")
 options, args = parser.parse_args()
-if len(args) != 2:
+if len(args) not in [2,3]:
     print "Wrong number of arguments. See -h for help."
     sys.exit(1)
 
+# Set profile default value if none is specified
+if len(args) == 2:
+    profile = 'default'
+else:
+    profile = args[2]
 
 # Common params for every Popen call
 stdparams = {
@@ -49,7 +54,7 @@ cmd = 'python'
 testparams = dict(stdparams)
 testparams['stdout'] = sys.stdout
 testparams['stderr'] = sys.stdout
-for tests in main['tests']:
+for tests in main['tests'][profile]:
     if not isinstance(tests, list):
         tests = [tests]
 
