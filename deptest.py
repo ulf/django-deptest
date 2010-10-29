@@ -20,6 +20,9 @@ from optparse import OptionParser
 # Check for correct number of arguments
 usage = "usage: %prog configfile project_to_test"
 parser = OptionParser(usage=usage)
+parser.add_option('-d', '--dependency-stdout', action="store_true",
+                  dest="dep_output", default=False,
+                  help="Display output of dependencies on stdout")
 options, args = parser.parse_args()
 if len(args) != 2:
     print "Wrong number of arguments. See -h for help."
@@ -28,7 +31,7 @@ if len(args) != 2:
 
 # Common params for every Popen call
 stdparams = {
-    'stdout' : subprocess.PIPE,
+    'stdout' : options.dep_output and sys.stdout or subprocess.PIPE,
     'stderr' : sys.stdout,
     'env' : os.environ,
     'close_fds' : True,
