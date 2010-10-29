@@ -36,6 +36,7 @@ Dependencies
 ------------
 
 * yamlconfig
+* PyYAML
 
 Roadmap
 -------
