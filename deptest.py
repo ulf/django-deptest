@@ -42,12 +42,15 @@ main = config['projects'][args[1]]
 # Name of python interpreter
 cmd = 'python'
 
-# Now we actually want some output
+# For the tests we actually want some output
 testparams = dict(stdparams)
 testparams['stdout'] = sys.stdout
 testparams['stderr'] = sys.stdout
-for t in main['tests']:
-    print "\nRunning test", t
+for tests in main['tests']:
+    if not isinstance(tests, list):
+        tests = [tests]
+
+    print "\nRunning tests", tests
 
     # Save the running processes here
     running = []
@@ -76,17 +79,19 @@ for t in main['tests']:
         p = subprocess.Popen( [cmd, "manage.py", "runserver", str(x['port'])],
                               cwd=x['dir'],
                               **stdparams)
-        running.append(p)
+        running.append((p, d))
 
-    p = subprocess.Popen( [cmd, "manage.py", "test", "-v0", t],
-                          cwd=main['dir'],
-                          **testparams)
-    # Wait for the tests to complete
-    p.wait()
+    for t in tests:
+        print "Tests", t
+        p = subprocess.Popen( [cmd, "manage.py", "test", "-v0", t],
+                              cwd=main['dir'],
+                              **testparams)
+        # Wait for the tests to complete
+        p.wait()
 
     # Now kill all running dependencies
-    for r in running:
-        print "Killing", r.pid
+    for r,name in running:
+        print "Killing", name
         os.killpg(r.pid, signal.SIGKILL)
 
 sys.exit()

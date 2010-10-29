@@ -32,6 +32,19 @@ To run the tests, you need to supply the config file and the project, which you 
 
 This will run the tests for the *main* project, as specified in the config file above. Before running the tests, the dependencies are started. In this case, the script runs the *login* project on port 8080 and the *static* project on port 8081. After apps are reset and fixtures loaded, the tests for *main* are run. After that, the dependencies get torn down.
 
+### Note
+
+Be aware that the dependencies are setup anew for every item in the `tests` variable, in the example `tests: [myapp, yourapp]` that means the following workflow:
+
+1. Dependencies are set up
+2. Test myapp is run
+3. Dependencies are torn down
+4. Dependencies are set up
+5. Test yourapp is run
+6. Dependencies are torn down
+
+If you want to run multiple tests without setting everything up every time, use a list element: `tests: [myapp, [yourapp, herapp]]`. Here, between the tests of `yourapp` and `herapp2` there is no tearing down of dependencies.
+
 Dependencies
 ------------
 
