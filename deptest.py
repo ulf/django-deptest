@@ -84,7 +84,7 @@ for tests in main['tests'][profile]:
                                       **stdparams)
 
         print "Starting server for", d, "on port", x['port']
-        p = subprocess.Popen( [cmd, "manage.py", "runserver", str(x['port'])],
+        p = subprocess.Popen( [cmd, "manage.py", "runserver", str(x['port']), "--noreload"],
                               cwd=x['dir'],
                               **stdparams)
         running.append((p, d))
