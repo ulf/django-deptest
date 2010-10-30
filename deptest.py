@@ -15,6 +15,7 @@ import sys, os
 import subprocess
 import signal
 import time
+import httplib
 from optparse import OptionParser
 
 # Check for correct number of arguments
@@ -87,6 +88,15 @@ for tests in main['tests'][profile]:
         p = subprocess.Popen( [cmd, "manage.py", "runserver", str(x['port']), "--noreload"],
                               cwd=x['dir'],
                               **stdparams)
+        # Wait for the server to be reachable
+        while True:
+            try:
+                conn = httplib.HTTPConnection('localhost', x['port'])
+                conn.request("HEAD", '/')
+                break
+            except:
+                print "Server",d,"on port",x['port'],"not yet running! Retry in 1s."
+                time.sleep(1)
         running.append((p, d))
 
     for t in tests:
