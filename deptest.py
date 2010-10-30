@@ -93,10 +93,11 @@ for tests in main['tests'][profile]:
             try:
                 conn = httplib.HTTPConnection('localhost', x['port'])
                 conn.request("HEAD", '/')
+                conn.getresponse()
                 break
             except:
-                print "Server",d,"on port",x['port'],"not yet running! Retry in 1s."
-                time.sleep(1)
+                print "Server",d,"on port",x['port'],"not yet running! Retry in 2s."
+            time.sleep(2)
         running.append((p, d))
 
     for t in tests:
