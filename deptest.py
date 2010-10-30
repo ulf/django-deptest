@@ -76,6 +76,7 @@ for tests in main['tests'][profile]:
                 p = subprocess.Popen( [cmd, "manage.py", "reset", r, "--noinput"],
                                       cwd=x['dir'],
                                       **stdparams)
+                p.wait()
 
         if 'fixtures' in x:
             for f in x['fixtures']:
@@ -83,6 +84,7 @@ for tests in main['tests'][profile]:
                 p = subprocess.Popen( [cmd, "manage.py", "loaddata", f],
                                       cwd=x['dir'],
                                       **stdparams)
+                p.wait()
 
         print "Starting server for", d, "on port", x['port']
         p = subprocess.Popen( [cmd, "manage.py", "runserver", str(x['port']), "--noreload"],
