@@ -41,7 +41,7 @@ stdparams = {
     'stderr' : sys.stdout,
     'env' : os.environ,
     'close_fds' : True,
-    'preexec_fn' : os.setsid    
+    'preexec_fn' : os.setsid
     }
 
 # Initialize config var and main project
@@ -55,6 +55,7 @@ cmd = 'python'
 testparams = dict(stdparams)
 testparams['stdout'] = sys.stdout
 testparams['stderr'] = sys.stdout
+results = {}
 for tests in main['tests'][profile]:
     if not isinstance(tests, list):
         tests = [tests]
@@ -109,10 +110,22 @@ for tests in main['tests'][profile]:
                               **testparams)
         # Wait for the tests to complete
         p.wait()
+        results[t] = p.returncode
 
     # Now kill all running dependencies
     for r,name in running:
         print "Killing", name
         os.killpg(r.pid, signal.SIGKILL)
 
-sys.exit()
+print """
+
+-------
+Results
+-------"""
+failures = 0
+for t, f in results.iteritems():
+    print "Return code for test", t,': ',f
+    if f == 1:
+        failures = 1
+
+sys.exit(failures)
