@@ -106,7 +106,7 @@ if options.coverage:
     if len(untested_all) == 0:
         print '\033[92mEvery test appears in at least one profile\033[0m\n'
     else:
-        print '\033[92mTests run in no profile:\033[0m\n', untested_all
+        print '\033[93mTests run in no profile:\033[0m\n', untested_all
     sys.exit()
 
 # Name of python interpreter
