@@ -2,7 +2,7 @@
 
 """
 django-deptest
-v0.1
+v0.2
 
 Testing wrapper for Django's unittests with interdependent projects
 
@@ -17,6 +17,21 @@ import signal
 import time
 import httplib
 from optparse import OptionParser
+import unittest
+from unittest import TestLoader
+
+def get_tests(x):
+    ret = []
+    for t in x.__dict__.get('_tests'):
+        if isinstance(t, unittest.TestSuite):
+            # Add every test in that Suite
+            ret.extend(get_tests(t))
+        else:
+            # Add the test directly
+            # Text replacement because .tests is omitted
+            # in the django test command
+            ret.append(t.id().replace('.tests.','.'))
+    return ret
 
 # Check for correct number of arguments
 usage = "usage: %prog configfile project_to_test [testprofile]"
@@ -24,6 +39,9 @@ parser = OptionParser(usage=usage)
 parser.add_option('-d', '--dependency-stdout', action="store_true",
                   dest="dep_output", default=False,
                   help="Display output of dependencies on stdout")
+parser.add_option('-c', '--check-coverage', action="store_true",
+                  dest="coverage", default=False,
+                  help="Check coverage of your tests")
 options, args = parser.parse_args()
 if len(args) not in [2,3]:
     print "Wrong number of arguments. See -h for help."
@@ -47,6 +65,49 @@ stdparams = {
 # Initialize config var and main project
 config = YamlConfig(args[0])
 main = config['projects'][args[1]]
+
+# To check coverage, determine all the modules we run tests for
+# Than compare to the tests which are really run in the profiles
+# one by one
+if options.coverage:
+    # Needed for test loading
+    sys.path.append(main['dir'])
+    # Use specified settings name or default
+    os.environ['DJANGO_SETTINGS_MODULE'] = main.get('settings', 'settings')
+
+    modules = []
+    # Find top level modules for all test profiles
+    for p in main['tests']:
+        prefixes = map(lambda x: x[:x.find('.')] if x.find('.') > -1 else x, main['tests'][p])
+        modules.extend(prefixes)
+    # Eliminate duplicates
+    modules = list(set(modules))
+    t = TestLoader()
+
+    all_tests = []
+    # Get every test of every module
+    for m in modules:
+        __import__(m + '.tests')
+        all_tests.extend(get_tests(t.loadTestsFromName(m + '.tests')))
+
+    untested_all = list(all_tests)
+    for p in main['tests']:
+        untested = list(all_tests)
+        # Remove every test of this profile from the untested list
+        for t in main['tests'][p]:
+            untested = filter(lambda x: x.find(t) != 0,untested)
+            untested_all = filter(lambda x: x.find(t) != 0,untested_all)
+        # Now the untested list contains only tests not regarded in this profile
+        if len(untested) == 0:
+            print '\033[92mProfile',p,'tests everything!\033[0m\n'
+        else:
+            print '\033[93mProfile',p,'misses',len(untested),'of',len(all_tests),'tests:\033[0m\n',untested,'\n'
+
+    if len(untested_all) == 0:
+        print '\033[92mEvery test appears in at least one profile\033[0m\n'
+    else:
+        print '\033[92mTests run in no profile:\033[0m\n', untested_all
+    sys.exit()
 
 # Name of python interpreter
 cmd = 'python'
