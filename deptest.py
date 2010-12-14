@@ -79,8 +79,6 @@ if options.coverage:
     modules = []
     # Find top level modules for all test profiles
     for p in main['tests']:
-        if isinstance(p, dict):
-            p = p['tests']
         prefixes = map(lambda x: x[:x.find('.')] if x.find('.') > -1 else x, main['tests'][p])
         modules.extend(prefixes)
     # Eliminate duplicates
@@ -95,8 +93,6 @@ if options.coverage:
 
     untested_all = list(all_tests)
     for p in main['tests']:
-        if isinstance(p, dict):
-            p = p['tests']
         untested = list(all_tests)
         # Remove every test of this profile from the untested list
         for t in main['tests'][p]:
