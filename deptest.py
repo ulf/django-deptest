@@ -19,6 +19,7 @@ import httplib
 from optparse import OptionParser
 import unittest
 from unittest import TestLoader
+from collections import defaultdict
 
 def get_tests(x):
     ret = []
@@ -112,12 +113,30 @@ if options.coverage:
 # Name of python interpreter
 cmd = 'python'
 
+def descend(container, *keys):
+    """
+    Helper function to descend in a nested default dict until
+    all keys are found, return False on keyfailure
+    """
+    for k in keys:
+        if not container[k]:
+            return False
+        container = container[k]
+    return container
+
 # For the tests we actually want some output
 testparams = dict(stdparams)
 testparams['stdout'] = sys.stdout
 testparams['stderr'] = sys.stdout
 results = {}
 for tests in main['tests'][profile]:
+    override = defaultdict(lambda : False)
+    if isinstance(tests, dict):
+        for d in tests['deps']:
+            override[d] = defaultdict(lambda : False)
+            for i in tests['deps'][d]:
+                override[d][i] = tests['deps'][d][i]
+        tests = tests['tests']
     if not isinstance(tests, list):
         tests = [tests]
 
@@ -133,7 +152,7 @@ for tests in main['tests'][profile]:
             sys.exit(1)
         x = config['projects'][d]
         if 'reset' in x:
-            for r in x['reset']:
+            for r in descend(override, d, 'reset') or x['reset']:
                 print "Resetting app", r, "for", d
                 p = subprocess.Popen( [cmd, "manage.py", "reset", r, "--noinput"],
                                       cwd=x['dir'],
@@ -141,7 +160,7 @@ for tests in main['tests'][profile]:
                 p.wait()
 
         if 'fixtures' in x:
-            for f in x['fixtures']:
+            for f in descend(override, d, 'fixtures') or x['fixtures']:
                 print "Loading fixture", f, "for", d
                 p = subprocess.Popen( [cmd, "manage.py", "loaddata", f],
                                       cwd=x['dir'],
